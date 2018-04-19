@@ -2,6 +2,7 @@ package dongzhong.camerautil;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
@@ -13,6 +14,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.util.Arrays;
 
@@ -101,17 +103,25 @@ public class CameraUtil {
     public void startCamera() throws SecurityException {
         try {
             if (cameraManager == null) {
+                if (cameraImageListener != null) {
+                    cameraImageListener.onCameraError("CameraManager is null");
+                }
                 return;
             }
             String[] cameraIdList = cameraManager.getCameraIdList();
             if (cameraIdList == null || cameraIdList.length <= 0) {
+                if (cameraImageListener != null) {
+                    cameraImageListener.onCameraError("Camera Id list is null");
+                }
                 return;
             }
 
             cameraManager.openCamera(cameraIdList[0], new CameraDeviceStateCallback(), handler);
         }
-        catch (Exception e) {
-
+        catch (CameraAccessException e) {
+            if (cameraImageListener != null) {
+                cameraImageListener.onCameraError("CameraAccessException: " + e.toString());
+            }
         }
     }
 
@@ -139,8 +149,10 @@ public class CameraUtil {
             try {
                 cameraDevice.createCaptureSession(Arrays.asList(imageReader.getSurface()), new CameraCaptureSessionStatecallback(), handler);
             }
-            catch (Exception e) {
-
+            catch (CameraAccessException e) {
+                if (cameraImageListener != null) {
+                    cameraImageListener.onCameraError("CameraAccessException: " + e.toString());
+                }
             }
         }
 
@@ -153,7 +165,9 @@ public class CameraUtil {
 
         @Override
         public void onError(@NonNull CameraDevice camera, int error) {
-
+            if (cameraImageListener != null) {
+                cameraImageListener.onCameraError("Error camera Id is " + camera.getId() + ", error: " + error);
+            }
         }
     }
 
@@ -169,7 +183,9 @@ public class CameraUtil {
 
         @Override
         public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-
+            if (cameraImageListener != null) {
+                cameraImageListener.onCameraError("CameraCaptureSession config failed");
+            }
         }
     }
 
@@ -186,8 +202,10 @@ public class CameraUtil {
             builder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_OFF);
             cameraCaptureSession.setRepeatingRequest(builder.build(), new CameraCaptureSession.CaptureCallback() {}, handler);
         }
-        catch (Exception e) {
-
+        catch (CameraAccessException e) {
+            if (cameraImageListener != null) {
+                cameraImageListener.onCameraError("CameraAccessException: " + e.toString());
+            }
         }
     }
 
@@ -208,5 +226,12 @@ public class CameraUtil {
          * @param cameraId
          */
         void onCameraDisconnected(String cameraId);
+
+        /**
+         * 摄像头错误
+         *
+         * @param info
+         */
+        void onCameraError(String info);
     }
 }
