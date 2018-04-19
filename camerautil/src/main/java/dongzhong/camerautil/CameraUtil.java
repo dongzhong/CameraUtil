@@ -98,7 +98,7 @@ public class CameraUtil {
     /**
      * 开启摄像头
      */
-    private void startCamera() throws SecurityException {
+    public void startCamera() throws SecurityException {
         try {
             if (cameraManager == null) {
                 return;
@@ -118,7 +118,7 @@ public class CameraUtil {
     /**
      * 释放资源
      */
-    private void release() {
+    public void release() {
         if (cameraCaptureSession != null) {
             cameraCaptureSession.close();
             cameraCaptureSession = null;
